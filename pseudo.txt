@@ -1,0 +1,45 @@
+value = 1
+Create empty list
+While value != 0
+	value = user input 
+	append value to list
+Print max(list)
+
+
+
+
+Request name from user
+Store input in variable called first_name
+Print first_name + “Hello, World”
+
+
+sum = 0
+number of ints = 0
+Repeat the following steps until user chooses to stop
+	read integer
+	sum = sum + integer
+	number of ints = number of ints + 1	
+sum/number of ints
+
+
+Create empty list called left_to_buy
+Create empty list called shopping_cart
+Repeat the following steps until user chooses to stop
+	read string
+	append string to shopping_cart
+Create empty list called shopping_list
+Repeat the following steps until user chooses to stop
+	read string
+	append string to shopping_list
+For item in shopping_list
+	if item not in shopping_cart
+		append to left_to_buy
+Rearrange left_to_buy in alphabetical order
+
+
+
+Read X,Y
+S= X+Y
+A = S/2
+P = X*Y
+Print S, A, P
