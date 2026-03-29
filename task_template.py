@@ -12,22 +12,6 @@ from datetime import date
        passwords from the file.
     - Use a while loop to validate your user name and password.
 '''
-def login():
-    """Authenticate user and return username if successful."""
-    username = input("Username: ")
-    password = input("Password: ")
-
-    with open("user.txt", "r") as file:
-        for line in file:
-            stored_username, stored_password = line.strip().split(", ")
-
-            if username == stored_username and password == stored_password:
-                print("Login successful")
-                return username
-
-    print("Invalid credentials")
-    return None
-
 
 with open("user.txt", "r") as file:
     users = {}
@@ -36,21 +20,48 @@ with open("user.txt", "r") as file:
         username, password = line.strip().split(", ")
         users[username] = password
 
+def login():
+    """Authenticate user and return username if successful."""
+    username = input("Username: ")
+    password = input("Password: ")
+
+    # Check if the username exists and the password matches
+    if username in users and users[username] == password:
+        print("Login successful.")
+        return username
+
+    print("Invalid credentials, login failed.")
+    exit()
+
+
 # Get user to login
 current_user = login()
 
 while True:
     # Present the menu to the user and
     # make sure that the user input is converted to lower case.
-    menu = input(
-        '''Select one of the following options:
-r - register a user
-a - add task
-va - view all tasks
-vm - view my tasks
-e - exit
-: '''
-    ).lower()
+    if current_user == "admin":
+        menu = input(
+            '''Select one of the following options:
+    r - register a user
+    a - add task
+    va - view all tasks
+    vm - view my tasks
+    vc - view completed tasks
+    del - delete tasks
+    e - exit
+    : '''
+        ).lower()
+
+    else:
+        menu = input(
+            '''Select one of the following options:
+    a - add task
+    va - view all tasks
+    vm - view my tasks
+    e - exit
+    : '''
+        ).lower()
 
     if menu == 'r':
         '''This code block will add a new user to the user.txt file
@@ -61,17 +72,22 @@ e - exit
             - Check if the new password and confirmed password are the same
             - If they are the same, add them to the user.txt file,
               otherwise present a relevant message'''
-        username = input("Enter a new username: ")
-        password = input("Enter a new password: ")
-        confirm_password = input("Confirm your password: ")
-        # Check if the new password and confirmed password are the same
-        # then add them to the user.txt file, otherwise present a relevant message
-        if password == confirm_password:
-            with open("user.txt", "a") as file:
-                file.write(f"{username}, {password}\n")
-            print("User registered successfully.")
+        # Check if the current user is admin before allowing them to register a new user
+        if current_user != "admin":
+            username = input("Enter a new username: ")
+            password = input("Enter a new password: ")
+            confirm_password = input("Confirm your password: ")
+            # Check if the new password and confirmed password are the same
+            # then add them to the user.txt file, otherwise present a relevant message
+            if password == confirm_password:
+                with open("user.txt", "a") as file:
+                    file.write(f"{username}, {password}\n")
+                print("User registered successfully.")
+            else:
+                print("Passwords do not match. Please try again.")
         else:
-            print("Passwords do not match. Please try again.")
+            print("Only admin can register new users.")
+            continue
 
     elif menu == 'a':
         '''This code block will allow a user to add a new task to task.txt file
@@ -120,7 +136,7 @@ e - exit
                 if not line.strip():
                     continue  # skip empty lines
 
-                user_name, title, description, due_date, current_date, no = [
+                user_name, title, description, due_date, current_date, status = [
                     x.strip() for x in line.split(",")
                 ]
 
@@ -130,7 +146,7 @@ e - exit
             Assigned to:                          {user_name}
             Date assigned:                        {current_date}
             Due date:                             {due_date}
-            Task Complete?                        {no}
+            Task Complete?                        {status}
             Task description:                     {description}
             ------------------------------------------------------
             """)
@@ -158,7 +174,7 @@ e - exit
                     print("Skipping malformed line:", line)
                     continue
 
-                file_username, title, description, due_date, current_date, no = parts
+                file_username, title, description, due_date, current_date, status = parts
 
                 # Check if task belongs to logged-in user
                 if file_username == current_user:
@@ -167,8 +183,73 @@ e - exit
                             Assigned to:        {file_username}
                             Date assigned:      {current_date}
                             Due date:           {due_date}
+                            Task Complete?      {status}
                             Task description:   {description}
                             """)
+                    
+
+    elif menu == 'vc':
+        '''This code block will read the task from task.txt file and
+         print to the console only the completed tasks in the format of Output 2 presented in the PDF
+        '''
+
+        # This option is only available to the admin user, so we check if the current
+        # user is admin before allowing them to view completed tasks
+        if current_user != "admin":
+            with open("tasks.txt", "r") as file:
+                for line in file:
+                    if not line.strip():
+                        continue  # skip empty lines
+
+                    user_name, title, description, due_date, current_date, status = [
+                        x.strip() for x in line.split(",")
+                    ]
+
+                    if status.lower() == "yes":
+                        print(f"""
+                ------------------------------------------------------
+                Task:                                 {title}
+                Assigned to:                          {user_name}
+                Date assigned:                        {current_date}
+                Due date:                             {due_date}
+                Task Complete?                        {status}
+                Task description:                     {description}
+                ------------------------------------------------------
+                """)
+        else:
+            # If the user is not admin, we present an error message as we
+            # don't want to allow them to view completed tasks or know that this ability exists
+            print("Invalid response. Please try again.")
+            continue
+
+    
+    elif menu == 'del':
+        '''This code block will allow the admin user to delete a task from the task.txt file'''
+
+        # Check if the current user is admin before allowing them to delete tasks
+        if current_user == "admin":
+            with open("tasks.txt", "r") as file:
+                tasks = [line.strip() for line in file if line.strip()]
+
+            task_to_delete = input("Enter the title of the task you want to delete: ")
+
+            with open("tasks.txt", "w") as file:
+                for line in file:
+                    user_name, title, description, due_date, current_date, status = [
+                        x.strip() for x in line.split(",")
+                    ]
+                    # Check if the title matches the task to delete, if not write it back to the file
+                    if title != task_to_delete:
+                        file.write(line)
+                    else:
+                        print(f"Task '{title}' has been deleted.")
+
+        # If the user is not admin, we present an error message as we don't want 
+        # to allow them to delete tasks or know that this ability exists
+        else:
+            print("Invalid response. Please try again.")
+            continue
+
 
     elif menu == 'e':
         print('Goodbye!!!')
